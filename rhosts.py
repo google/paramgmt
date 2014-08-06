@@ -1,0 +1,61 @@
+#!/usr/bin/python
+
+# Copyright 2014 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""rhosts: An application that wraps the paramgmt.ParseFile function."""
+
+import argparse
+import os
+import sys
+
+import paramgmt
+
+
+def main(args):
+  hosts = []
+  if args.hosts is not None:
+    hosts.extend(args.hosts)
+  if args.hostfile is not None:
+    hosts.extend(paramgmt.ParseFile(args.hostfile))
+  if not hosts:
+    print 'no hosts specified'
+    return 0
+
+  for host in hosts:
+    print '{0}'.format(host)
+  return 0
+
+
+def check_hosts(value):
+  return value.split()
+
+
+def check_hostfile(value):
+  if not os.path.isfile(value):
+    msg = 'hostfile "{0}" does not exist'.format(value)
+    raise argparse.ArgumentTypeError(msg)
+  if not os.access(value, os.R_OK):
+    msg = 'hostfile "{0}" is not readable'.format(value)
+    raise argparse.ArgumentTypeError(msg)
+  return value
+
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(prog='rhosts', description='remote hosts')
+  parser.add_argument('-m', '--hosts', type=check_hosts,
+                      help='A list of hostnames (space separated)')
+  parser.add_argument('-f', '--hostfile', type=check_hostfile,
+                      help='A file containing hostnames')
+  sys.exit(main(parser.parse_args()))
