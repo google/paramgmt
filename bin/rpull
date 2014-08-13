@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""rpull: An application that wraps the paramgmt.RemotePull function."""
+"""rpull: An application that wraps the paramgmt.remote_pull function."""
 
 import argparse
 import os
@@ -28,17 +28,17 @@ def main(args):
   if args.hosts is not None:
     hosts.extend(args.hosts)
   if args.hostfile is not None:
-    hosts.extend(paramgmt.ParseFile(args.hostfile))
+    hosts.extend(paramgmt.parse_file(args.hostfile))
   if not hosts:
     print 'no hosts specified'
     return 0
 
   parallel = not args.sequential
   color = not args.no_color
-  pmgmt = paramgmt.ParaMgmt(args.user, hosts, parallel, False,
+  pmgmt = paramgmt.Controller(args.user, hosts, parallel, False,
                             color, args.attempts)
-  ret = pmgmt.RemotePull(args.remote, args.destination)
-  return 0 if paramgmt.AllSuccess(ret) else -1
+  ret = pmgmt.remote_pull(args.remote, args.destination)
+  return 0 if paramgmt.all_success(ret) else -1
 
 
 def check_hosts(value):

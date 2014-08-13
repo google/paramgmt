@@ -1,3 +1,8 @@
+# this is a sample file of a hosts file
+#  as you can see, the host file syntax supports 
+#  comments and whitespace removal        
+# hosts can be specified as names or 
+
 192.168.2.1
 tux
 penguin

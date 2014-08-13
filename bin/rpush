@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""rscript: An application that wraps the paramgmt.RemoteScript function."""
+"""rpush: An application that wraps the paramgmt.remote_push function."""
 
 import argparse
 import os
@@ -28,17 +28,17 @@ def main(args):
   if args.hosts is not None:
     hosts.extend(args.hosts)
   if args.hostfile is not None:
-    hosts.extend(paramgmt.ParseFile(args.hostfile))
+    hosts.extend(paramgmt.parse_file(args.hostfile))
   if not hosts:
     print 'no hosts specified'
     return 0
 
   parallel = not args.sequential
   color = not args.no_color
-  pmgmt = paramgmt.ParaMgmt(args.user, hosts, parallel, False,
+  pmgmt = paramgmt.Controller(args.user, hosts, parallel, False,
                             color, args.attempts)
-  ret = pmgmt.RemoteScript(args.scripts)
-  return 0 if paramgmt.AllSuccess(ret) else -1
+  ret = pmgmt.remote_push(args.local, args.destination)
+  return 0 if paramgmt.all_success(ret) else -1
 
 
 def check_hosts(value):
@@ -79,6 +79,6 @@ if __name__ == '__main__':
                       help='Maximum number of command attempts')
   parser.add_argument('-d', '--destination', default='~/',
                       help='Specification for the local file/directory')
-  parser.add_argument('scripts', nargs=argparse.REMAINDER,
-                      help='Local scripts to run remotely')
+  parser.add_argument('local', nargs=argparse.REMAINDER,
+                      help='Local files to push')
   sys.exit(main(parser.parse_args()))

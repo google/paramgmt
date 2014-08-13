@@ -14,14 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-TESTS=${1:-1}  # default to one test
+HOSTFILE=${1:-hosts.txt}
+TESTS=${2:-1}  # default to one test
 ATTEMPTS=3
 
 hosts=()
 function load_hosts() {
-  hosts=( $(./hosts.py --hostfile=$1) )
+  hosts=( $(rhosts --hostfile=$1) )
   echo "${#hosts[@]} hosts"
-  ./hosts.py --hostfile=$1
+  echo "${hosts[*]}"
 }
 
 function assert() {
@@ -43,11 +44,11 @@ for test_id in $(seq 1 $TESTS); do
   echo ""
   echo ""
 
-  load_hosts hosts.txt
+  load_hosts ${HOSTFILE}
 
   rm -rf /tmp/r
 
-  ./lcmd.py --hostfile=hosts.txt --attempts=1 mkdir -p /tmp/r/?HOST
+  lcmd --hostfile ${HOSTFILE} --attempts 1 mkdir -p /tmp/r/?HOST
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
     assert "-d /tmp/r/$host" $LINENO
@@ -60,7 +61,7 @@ for test_id in $(seq 1 $TESTS); do
   echo "test 3" > /tmp/r/test3.txt
   assert "-f /tmp/r/test3.txt" $LINENO
 
-  ./lcmd.py --hostfile=hosts.txt --attempts=1 \
+  lcmd --hostfile ${HOSTFILE} --attempts 1 \
     cp /tmp/r/test1.txt /tmp/r/?HOST/test1.txt
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
@@ -70,7 +71,7 @@ for test_id in $(seq 1 $TESTS); do
     assert "$? -eq 0" $LINENO
   done
 
-  ./lcmd.py --hostfile=hosts.txt --attempts=1 \
+  lcmd --hostfile ${HOSTFILE} --attempts 1 \
     cp /tmp/r/test2.txt /tmp/r/?HOST/test2.txt
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
@@ -80,7 +81,7 @@ for test_id in $(seq 1 $TESTS); do
     assert "$? -eq 0" $LINENO
   done
 
-  ./lcmd.py --hostfile=hosts.txt --attempts=1 \
+  lcmd --hostfile ${HOSTFILE} --attempts 1 \
     cp /tmp/r/test3.txt /tmp/r/?HOST/test3.txt
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
@@ -90,43 +91,43 @@ for test_id in $(seq 1 $TESTS); do
     assert "$? -eq 0" $LINENO
   done
 
-  ./rcmd.py --hostfile=hosts.txt --attempts=$ATTEMPTS rm -rf /tmp/r
+  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS rm -rf /tmp/r
   assert "$? -eq 0" $LINENO
 
-  ./rcmd.py --hostfile=hosts.txt --attempts=$ATTEMPTS mkdir -p /tmp/r/?HOST
+  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS mkdir -p /tmp/r/?HOST
   assert "$? -eq 0" $LINENO
 
-  ./rcmd.py --hostfile=hosts.txt --attempts=$ATTEMPTS test -d /tmp/r/?HOST
+  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS test -d /tmp/r/?HOST
   assert "$? -eq 0" $LINENO
 
-  ./rpush.py --hostfile=hosts.txt --attempts=$ATTEMPTS \
+  rpush --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
     --destination=/tmp/r/?HOST/ \
     /tmp/r/?HOST/test1.txt /tmp/r/?HOST/test2.txt
   assert "$? -eq 0" $LINENO
 
-  ./rcmd.py --hostfile=hosts.txt --attempts=$ATTEMPTS \
+  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
     test -f /tmp/r/?HOST/test1.txt
   assert "$? -eq 0" $LINENO
 
-  ./rcmd.py --hostfile=hosts.txt --attempts=$ATTEMPTS \
+  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
     test -f /tmp/r/?HOST/test2.txt
   assert "$? -eq 0" $LINENO
 
-  ./rpush.py --hostfile=hosts.txt --attempts=$ATTEMPTS \
+  rpush --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
     --destination=/tmp/r/?HOST/ /tmp/r/?HOST/test3.txt
   assert "$? -eq 0" $LINENO
 
-  ./rcmd.py --hostfile=hosts.txt --attempts=$ATTEMPTS \
+  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
     test -f /tmp/r/?HOST/test3.txt
   assert "$? -eq 0" $LINENO
 
-  ./lcmd.py --hostfile=hosts.txt --attempts=1 mkdir -p /tmp/r/?HOST/pull
+  lcmd --hostfile ${HOSTFILE} --attempts 1 mkdir -p /tmp/r/?HOST/pull
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
     assert "-d /tmp/r/$host/pull" $LINENO
   done
 
-  ./rpull.py --hostfile=hosts.txt --attempts=$ATTEMPTS \
+  rpull --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
     --destination=/tmp/r/?HOST/pull/ \
     /tmp/r/?HOST/test1.txt /tmp/r/?HOST/test2.txt
   assert "$? -eq 0" $LINENO
@@ -142,7 +143,7 @@ for test_id in $(seq 1 $TESTS); do
     assert "$? -eq 0" $LINENO
   done
 
-  ./rpull.py --hostfile=hosts.txt --attempts=$ATTEMPTS \
+  rpull --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
     --destination=/tmp/r/?HOST/pull/ /tmp/r/?HOST/test3.txt
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
@@ -152,13 +153,13 @@ for test_id in $(seq 1 $TESTS); do
     assert "$? -eq 0" $LINENO
   done
 
-  ./lcmd.py --hostfile=hosts.txt --attempts=1 cp script1.sh \
+  lcmd --hostfile ${HOSTFILE} --attempts 1 cp script1.sh \
     /tmp/r/?HOST/script1.sh
   assert "$? -eq 0" $LINENO
-  ./lcmd.py --hostfile=hosts.txt --attempts=1 cp script2.sh \
+  lcmd --hostfile ${HOSTFILE} --attempts 1 cp script2.sh \
     /tmp/r/?HOST/script2.sh
   assert "$? -eq 0" $LINENO
-  ./lcmd.py --hostfile=hosts.txt --attempts=1 cp script3.sh \
+  lcmd --hostfile ${HOSTFILE} --attempts 1 cp script3.sh \
     /tmp/r/?HOST/script3.sh
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
@@ -167,21 +168,21 @@ for test_id in $(seq 1 $TESTS); do
     assert "-f /tmp/r/$host/script3.sh" $LINENO
   done
 
-  ./rscript.py --hostfile=hosts.txt --attempts=$ATTEMPTS \
+  rscript --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
     /tmp/r/?HOST/script1.sh /tmp/r/?HOST/script2.sh /tmp/r/?HOST/script3.sh
   assert "$? -eq 0" $LINENO
 
-  ./rcmd.py --hostfile=hosts.txt --attempts=$ATTEMPTS \
+  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
     test ! -f /tmp/r/?HOST/test1.txt
   assert "$? -eq 0" $LINENO
-  ./rcmd.py --hostfile=hosts.txt --attempts=$ATTEMPTS \
+  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
     test -f /tmp/r/?HOST/test2.txt
   assert "$? -eq 0" $LINENO
-  ./rcmd.py --hostfile=hosts.txt --attempts=$ATTEMPTS \
+  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
     test ! -f /tmp/r/?HOST/test3.txt
   assert "$? -eq 0" $LINENO
 
-  ./lcmd.py --hostfile=hosts.txt --attempts=1 \
+  lcmd --hostfile ${HOSTFILE} --attempts 1 \
     "cat /tmp/r/?HOST/pull/test3.txt | grep test && echo awesome"
 
 done

@@ -18,18 +18,22 @@ import subprocess
 import sys
 import threading
 
-from termcolor import colored
+try:
+  from termcolor import colored
+  CAN_COLOR = True
+except:
+  CAN_COLOR = False
 
 
-class ParaMgmt(object):
+class Controller(object):
   """This class offers parallel cluster management using SSH and SCP."""
 
-  class MgmtCommand(threading.Thread):
-    """A container class for commands given to ParaMgmt."""
+  class Command(threading.Thread):
+    """A container class for commands given to Controller."""
 
     def __init__(self, host, commands, max_attempts, description=None,
                  stdin=None):
-      """Constructor for MgmtCommand."""
+      """Constructor for Controller.Command."""
       threading.Thread.__init__(self)
       self.host = host
       self.commands = commands
@@ -68,7 +72,7 @@ class ParaMgmt(object):
         if self.retcode == 0:
           break
 
-    def Status(self, color=True):
+    def status(self, color=True):
       """This displays the result of the command.
 
       Args:
@@ -101,7 +105,7 @@ class ParaMgmt(object):
 
   def __init__(self, user, hosts, parallel=True, quiet=False, color=True,
                attempts=1):
-    """Constructor for ParaMgmt.
+    """Constructor for Controller.
 
     Args:
       user     : The remote user account.
@@ -117,13 +121,13 @@ class ParaMgmt(object):
     self._hosts = hosts
     self._parallel = parallel
     self._quiet = quiet
-    self._color = color and sys.stdout.isatty()
+    self._color = CAN_COLOR and color and sys.stdout.isatty()
     self._attempts = attempts
     self._ssh_options = ['-o', 'PasswordAuthentication=no',
                          '-o', 'ConnectTimeout=2',
                          '-o', 'ConnectionAttempts=2']
 
-  def LocalCommand(self, commands):
+  def local_command(self, commands):
     """Run local command for all hosts specified.
 
     Args:
@@ -131,27 +135,27 @@ class ParaMgmt(object):
                  '?HOST' is replaced with actual hostname.
 
     Returns:
-      A list of MgmtCommand objects.
+      A list of Controller.Command objects.
     """
 
-    # create a list of MgmtCommands for _RunCommands()
+    # create a list of Controller.Commands for _run_commands()
     mgmt_commands = []
     for host in self._hosts:
       command = []
       for c in commands:
         command.append(c.replace('?HOST', host))
       command = ' '.join(command)
-      mgmt_command = ParaMgmt.MgmtCommand(
+      mgmt_command = Controller.Command(
           host, ['/bin/sh'], self._attempts,
           'lcmd: ({0}) {1}'.format(host, command),
           command)
       mgmt_commands.append(mgmt_command)
 
     # run all commands
-    self._RunCommands(mgmt_commands)
+    self._run_commands(mgmt_commands)
     return mgmt_commands
 
-  def RemoteCommand(self, commands):
+  def remote_command(self, commands):
     """Run SSH command to all hosts specified.
 
     Args:
@@ -159,10 +163,10 @@ class ParaMgmt(object):
                  '?HOST' is replaced with actual hostname.
 
     Returns:
-      A list of MgmtCommand objects.
+      A list of Controller.Command objects.
     """
 
-    # create a list of MgmtCommands for _RunCommands()
+    # create a list of Controller.Commands for _run_commands()
     mgmt_commands = []
     for host in self._hosts:
       command = ['ssh']
@@ -175,14 +179,14 @@ class ParaMgmt(object):
         tmp = c.replace('?HOST', host)
         command.append(tmp)
         desc += ' {0}'.format(tmp)
-      mgmt_command = ParaMgmt.MgmtCommand(host, command, self._attempts, desc)
+      mgmt_command = Controller.Command(host, command, self._attempts, desc)
       mgmt_commands.append(mgmt_command)
 
     # run all commands
-    self._RunCommands(mgmt_commands)
+    self._run_commands(mgmt_commands)
     return mgmt_commands
 
-  def RemotePush(self, local, remote):
+  def remote_push(self, local, remote):
     """Push specified documents to all remote hosts via SCP.
 
     Args:
@@ -192,10 +196,10 @@ class ParaMgmt(object):
                   '?HOST' is replaced with actual hostname.
 
     Returns:
-      A list of MgmtCommand objects.
+      A list of Controller.Command objects.
     """
 
-    # create a list of MgmtCommands for _RunCommands()
+    # create a list of Controller.Commands for _run_commands()
     mgmt_commands = []
     for host in self._hosts:
       command = ['scp', '-r']
@@ -210,14 +214,14 @@ class ParaMgmt(object):
                                  remote.replace('?HOST', host))
       command.append(tmp)
       desc += tmp
-      mgmt_command = ParaMgmt.MgmtCommand(host, command, self._attempts, desc)
+      mgmt_command = Controller.Command(host, command, self._attempts, desc)
       mgmt_commands.append(mgmt_command)
 
     # run all commands
-    self._RunCommands(mgmt_commands)
+    self._run_commands(mgmt_commands)
     return mgmt_commands
 
-  def RemotePull(self, remote, local):
+  def remote_pull(self, remote, local):
     """Push specified documents to all remote hosts via SCP.
 
     Args:
@@ -227,10 +231,10 @@ class ParaMgmt(object):
                   '?HOST' is replaced with actual hostname.
 
     Returns:
-      A list of MgmtCommand objects.
+      A list of Controller.Command objects.
     """
 
-    # create a list of MgmtCommands for _RunCommands()
+    # create a list of Controller.Commands for _run_commands()
     mgmt_commands = []
     for host in self._hosts:
       command = ['scp', '-r']
@@ -250,14 +254,14 @@ class ParaMgmt(object):
       tmp = local.replace('?HOST', host)
       command.append(tmp)
       desc += tmp
-      mgmt_command = ParaMgmt.MgmtCommand(host, command, self._attempts, desc)
+      mgmt_command = Controller.Command(host, command, self._attempts, desc)
       mgmt_commands.append(mgmt_command)
 
     # run all commands
-    self._RunCommands(mgmt_commands)
+    self._run_commands(mgmt_commands)
     return mgmt_commands
 
-  def RemoteScript(self, scripts):
+  def remote_script(self, scripts):
     """Run local scripts on remote hosts via SSH.
 
     Args:
@@ -266,10 +270,10 @@ class ParaMgmt(object):
                  '?HOST' in the script is replaced with actual hostname.
 
     Returns:
-      A list of MgmtCommand objects.
+      A list of Controller.Command objects.
     """
 
-    # create a list of MgmtCommands for _RunCommands()
+    # create a list of Controller.Commands for _run_commands()
     mgmt_commands = []
     for host in self._hosts:
       command = ['ssh', '-T']
@@ -293,19 +297,19 @@ class ParaMgmt(object):
 
       # format description and command
       desc += '({0}) running {1}'.format(tmp, ' '.join(script_names))
-      mgmt_command = ParaMgmt.MgmtCommand(host, command, self._attempts, desc,
+      mgmt_command = Controller.Command(host, command, self._attempts, desc,
                                           all_script.replace('?HOST', host))
       mgmt_commands.append(mgmt_command)
 
     # run all commands
-    self._RunCommands(mgmt_commands)
+    self._run_commands(mgmt_commands)
     return mgmt_commands
 
-  def _RunCommands(self, mgmt_commands):
+  def _run_commands(self, mgmt_commands):
     """This runs the specified commands.
 
     Args:
-      mgmt_commands  : A list of MgmtCommands
+      mgmt_commands  : A list of Controller.Commands
 
     Returns:
       Nothing, but it completes mgmt_command objects
@@ -321,14 +325,14 @@ class ParaMgmt(object):
       else:
         mgmt_command.join()
         if not self._quiet:
-          mgmt_command.Status(self._color)
+          mgmt_command.status(self._color)
         if mgmt_command.retcode is not 0:
           failed.append(mgmt_command)
 
     for mgmt_command in outstanding:
       mgmt_command.join()
       if not self._quiet:
-        mgmt_command.Status(self._color)
+        mgmt_command.status(self._color)
       if mgmt_command.retcode is not 0:
         failed.append(mgmt_command)
 
@@ -348,11 +352,11 @@ class ParaMgmt(object):
           print host
 
 
-def AllSuccess(mgmt_commands):
+def all_success(mgmt_commands):
   """Determines if all child processes were successful.
 
   Args:
-    mgmt_commands : A list of all MgmtCommand objects
+    mgmt_commands : A list of all Controller.Command objects
 
   Returns:
     True if all child processes succeeded
@@ -364,11 +368,11 @@ def AllSuccess(mgmt_commands):
   return True
 
 
-def ParseFile(filename):
+def parse_file(filename):
   """This function parses a file to generate a list of lines.
 
-  This function removes comments delimited by '#' and ingores empty
-  lines.
+  This function removes comments delimited by '#', ingores empty
+  lines, and leading and trailing whitespace.
 
   Args:
     filename : The name of the file to be parsed

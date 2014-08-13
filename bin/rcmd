@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""rhosts: An application that wraps the paramgmt.ParseFile function."""
+"""rcmd: An application that wraps the paramgmt.remote_command function."""
 
 import argparse
 import os
@@ -28,14 +28,17 @@ def main(args):
   if args.hosts is not None:
     hosts.extend(args.hosts)
   if args.hostfile is not None:
-    hosts.extend(paramgmt.ParseFile(args.hostfile))
+    hosts.extend(paramgmt.parse_file(args.hostfile))
   if not hosts:
     print 'no hosts specified'
     return 0
 
-  for host in hosts:
-    print '{0}'.format(host)
-  return 0
+  parallel = not args.sequential
+  color = not args.no_color
+  pmgmt = paramgmt.Controller(args.user, hosts, parallel, False,
+                            color, args.attempts)
+  ret = pmgmt.remote_command(args.commands)
+  return 0 if paramgmt.all_success(ret) else -1
 
 
 def check_hosts(value):
@@ -52,10 +55,28 @@ def check_hostfile(value):
   return value
 
 
+def check_attempts(value):
+  ivalue = int(value)
+  if ivalue < 1:
+    msg = 'attempts must be greater than 0'
+    raise argparse.ArgumentTypeError(msg)
+  return ivalue
+
+
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(prog='rhosts', description='remote hosts')
+  parser = argparse.ArgumentParser(prog='rcmd', description='remote commands')
+  parser.add_argument('-u', '--user', default='root',
+                      help='Username for SSH commands')
   parser.add_argument('-m', '--hosts', type=check_hosts,
                       help='A list of hostnames (space separated)')
   parser.add_argument('-f', '--hostfile', type=check_hostfile,
                       help='A file containing hostnames')
+  parser.add_argument('-s', '--sequential', action='store_true',
+                      help='Run commands sequentially')
+  parser.add_argument('-c', '--no_color', action='store_true',
+                      help='Disable coloring of output')
+  parser.add_argument('-a', '--attempts', type=check_attempts, default=1,
+                      help='Maximum number of command attempts')
+  parser.add_argument('commands', nargs=argparse.REMAINDER,
+                      help='Commands to be run locally')
   sys.exit(main(parser.parse_args()))

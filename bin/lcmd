@@ -14,7 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""rpush: An application that wraps the paramgmt.RemotePush function."""
+
+"""lcmd: An application that wraps the paramgmt.local_command function."""
 
 import argparse
 import os
@@ -28,17 +29,17 @@ def main(args):
   if args.hosts is not None:
     hosts.extend(args.hosts)
   if args.hostfile is not None:
-    hosts.extend(paramgmt.ParseFile(args.hostfile))
+    hosts.extend(paramgmt.parse_file(args.hostfile))
   if not hosts:
     print 'no hosts specified'
     return 0
 
   parallel = not args.sequential
   color = not args.no_color
-  pmgmt = paramgmt.ParaMgmt(args.user, hosts, parallel, False,
+  pmgmt = paramgmt.Controller('unused', hosts, parallel, False,
                             color, args.attempts)
-  ret = pmgmt.RemotePush(args.local, args.destination)
-  return 0 if paramgmt.AllSuccess(ret) else -1
+  ret = pmgmt.local_command(args.commands)
+  return 0 if paramgmt.all_success(ret) else -1
 
 
 def check_hosts(value):
@@ -64,9 +65,7 @@ def check_attempts(value):
 
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(prog='rpush', description='remote push')
-  parser.add_argument('-u', '--user', default='root',
-                      help='Username for SSH commands')
+  parser = argparse.ArgumentParser(prog='lcmd', description='local commands')
   parser.add_argument('-m', '--hosts', type=check_hosts,
                       help='A list of hostnames (space separated)')
   parser.add_argument('-f', '--hostfile', type=check_hostfile,
@@ -77,8 +76,6 @@ if __name__ == '__main__':
                       help='Disable coloring of output')
   parser.add_argument('-a', '--attempts', type=check_attempts, default=1,
                       help='Maximum number of command attempts')
-  parser.add_argument('-d', '--destination', default='~/',
-                      help='Specification for the local file/directory')
-  parser.add_argument('local', nargs=argparse.REMAINDER,
-                      help='Local files to push')
+  parser.add_argument('commands', nargs=argparse.REMAINDER,
+                      help='Commands to be run locally')
   sys.exit(main(parser.parse_args()))
