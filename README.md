@@ -6,8 +6,4 @@ etc.) in parallel and with good error control. The package supports running
 local commands, remote commands, local scripts on remote machines, pushing
 files, and pulling files.
 
-The included 'test.sh' uses all of the command-line executables. Just create
-your own 'hosts.txt' with a list of valid remote machines and the test script
-should work. Some changes might be needed if you don't have root access.
-
 This is not an official Google product.
