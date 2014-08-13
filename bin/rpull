@@ -35,8 +35,8 @@ def main(args):
 
   parallel = not args.sequential
   color = not args.no_color
-  pmgmt = paramgmt.Controller(args.user, hosts, parallel, False,
-                            color, args.attempts)
+  pmgmt = paramgmt.Controller(hosts, args.user, parallel, False,
+                              color, args.attempts)
   ret = pmgmt.remote_pull(args.remote, args.destination)
   return 0 if paramgmt.all_success(ret) else -1
 
@@ -65,7 +65,7 @@ def check_attempts(value):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(prog='rpull', description='remote pull')
-  parser.add_argument('-u', '--user', default='root',
+  parser.add_argument('-u', '--user', default=paramgmt.USER_DEFAULT,
                       help='Username for SSH commands')
   parser.add_argument('-m', '--hosts', type=check_hosts,
                       help='A list of hostnames (space separated)')
@@ -75,7 +75,8 @@ if __name__ == '__main__':
                       help='Run commands sequentially')
   parser.add_argument('-c', '--no_color', action='store_true',
                       help='Disable coloring of output')
-  parser.add_argument('-a', '--attempts', type=check_attempts, default=1,
+  parser.add_argument('-a', '--attempts', type=check_attempts,
+                      default=paramgmt.ATTEMPTS_DEFAULT,
                       help='Maximum number of command attempts')
   parser.add_argument('-d', '--destination', default='~/',
                       help='Specification for the local file/directory')

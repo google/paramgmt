@@ -36,8 +36,8 @@ def main(args):
 
   parallel = not args.sequential
   color = not args.no_color
-  pmgmt = paramgmt.Controller('unused', hosts, parallel, False,
-                            color, args.attempts)
+  pmgmt = paramgmt.Controller(hosts, parallel, False,
+                              color, args.attempts)
   ret = pmgmt.local_command(args.commands)
   return 0 if paramgmt.all_success(ret) else -1
 
