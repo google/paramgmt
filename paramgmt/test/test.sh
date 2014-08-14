@@ -184,5 +184,10 @@ for test_id in $(seq 1 $TESTS); do
 
   lcmd --hostfile ${HOSTFILE} --attempts 1 \
     "cat /tmp/r/?HOST/pull/test3.txt | grep test && echo awesome"
+  assert "$? -eq 0" $LINENO
+
+  lcmd --hostfile ${HOSTFILE} --attempts 1 \
+    "echo 'This is error text' 1>&2"
+  assert "$? -eq 0" $LINENO
 
 done

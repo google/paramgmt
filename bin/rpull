@@ -35,8 +35,8 @@ def main(args):
 
   parallel = not args.sequential
   color = not args.no_color
-  pmgmt = paramgmt.Controller(hosts, args.user, parallel, False,
-                              color, args.attempts)
+  pmgmt = paramgmt.Controller(hosts=hosts, user=args.user, parallel=parallel,
+                              quiet=False, color=color, attempts=args.attempts)
   ret = pmgmt.remote_pull(args.remote, args.destination)
   return 0 if paramgmt.all_success(ret) else -1
 

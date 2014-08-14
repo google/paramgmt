@@ -110,7 +110,7 @@ class Controller(object):
       else:
         rspec = '{0}'.format(host)
       command.append(rspec)
-      desc += '({0})'.format(tmp)
+      desc += '({0})'.format(rspec)
       for c in commands:
         tmp = c.replace('?HOST', host)
         command.append(tmp)
