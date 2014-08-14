@@ -23,6 +23,7 @@ function load_hosts() {
   hosts=( $(rhosts --hostfile=$1) )
   echo "${#hosts[@]} hosts"
   echo "${hosts[*]}"
+  echo ""
 }
 
 function assert() {
@@ -38,10 +39,9 @@ function assert() {
 }
 
 for test_id in $(seq 1 $TESTS); do
-  echo ""
-  echo ""
-  echo "*** Starting test #$test_id ***"
-  echo ""
+  echo "***********************************************"
+  echo "*** Starting test $test_id of ${TESTS}"
+  echo "***********************************************"
   echo ""
 
   load_hosts ${HOSTFILE}
@@ -187,7 +187,7 @@ for test_id in $(seq 1 $TESTS); do
   assert "$? -eq 0" $LINENO
 
   lcmd --hostfile ${HOSTFILE} --attempts 1 \
-    "echo 'This is error text' 1>&2"
+    "echo 'This is error text' 1>&2 && echo 'This is normal text'"
   assert "$? -eq 0" $LINENO
 
 done

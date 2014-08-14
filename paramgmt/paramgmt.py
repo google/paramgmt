@@ -55,10 +55,123 @@ class Controller(object):
     self._parallel = parallel
     self._quiet = quiet
     self._color = CAN_COLOR and color and sys.stdout.isatty()
-    self._attempts = attempts
-    self._ssh_options = ['-o', 'PasswordAuthentication=no',
-                         '-o', 'ConnectTimeout=2',
-                         '-o', 'ConnectionAttempts=2']
+    self._attempts = int(attempts)
+    self._ssh_connect_timeout = 2
+    self._ssh_connection_attempts = 3
+
+  @property
+  def user(self):
+    return self._user
+
+  @user.setter
+  def user(self, val):
+    self._user = val
+
+  @property
+  def parallel(self):
+    return self._parallel
+
+  @parallel.setter
+  def parallel(self, val):
+    self._parallel = val
+
+  @property
+  def quiet(self):
+    return self._quiet
+
+  @quiet.setter
+  def quiet(self, val):
+    self._quiet = val
+
+  @property
+  def color(self):
+    return self._color
+
+  @color.setter
+  def color(self, val):
+    if val:
+      if not sys.stdout.isatty():
+        raise EnvironmentError('stdout is not a TTY')
+      if not CAN_COLOR:
+        raise EnvironmentError('package \'termcolor\' does not exist')
+    self._color = val
+
+  @property
+  def attempts(self):
+    return self._attempts
+
+  @attempts.setter
+  def attempts(self, val):
+    self._attempts = int(val)
+
+  @property
+  def ssh_connect_timeout(self):
+    return self._ssh_connect_timeout
+
+  @ssh_connect_timeout.setter
+  def ssh_connect_timeout(self, val):
+    self._ssh_connect_timeout = int(val)
+
+  @property
+  def ssh_connection_attempts(self):
+    return self._ssh_connection_attempts
+
+  @ssh_connection_attempts.setter
+  def ssh_connection_attempts(self, val):
+    self._ssh_connection_attempts = int(val)
+
+  def _ssh_options(self):
+    return ['-o', 'PasswordAuthentication=no',
+            '-o', 'ConnectTimeout={0}'
+            .format(self._ssh_connect_timeout),
+            '-o', 'ConnectionAttempts={0}'
+            .format(self._ssh_connection_attempts)]
+
+  def _run_commands(self, mgmt_commands):
+    """This runs the specified commands.
+
+    Args:
+      mgmt_commands  : A list of Commands
+
+    Returns:
+      Nothing, but it completes mgmt_command objects
+    """
+
+    # run all commands
+    outstanding = []
+    failed = []
+    for mgmt_command in mgmt_commands:
+      mgmt_command.start()
+      if self._parallel:
+        outstanding.append(mgmt_command)
+      else:
+        mgmt_command.join()
+        if not self._quiet:
+          mgmt_command.status(self._color)
+        if mgmt_command.retcode is not 0:
+          failed.append(mgmt_command)
+
+    for mgmt_command in outstanding:
+      mgmt_command.join()
+      if not self._quiet:
+        mgmt_command.status(self._color)
+      if mgmt_command.retcode is not 0:
+        failed.append(mgmt_command)
+
+    # show stats
+    if not self._quiet:
+      total = len(mgmt_commands)
+      failures = len(failed)
+      successes = total - failures
+      print ('{0} succeeded, {1} failed, {2} total\n'
+             .format(successes, failures, total))
+      if failures > 0:
+        print 'Failed hosts:'
+        for mgmt_command in failed:
+          host = mgmt_command.host
+          if self._color:
+            host = colored(host, 'red')
+          print host
 
   def local_command(self, commands):
     """Run local command for all hosts specified.
@@ -103,7 +216,7 @@ class Controller(object):
     mgmt_commands = []
     for host in self._hosts:
       command = ['ssh']
-      command.extend(self._ssh_options)
+      command.extend(self._ssh_options())
       desc = 'rcmd: '
       if self._user:
         rspec = '{0}@{1}'.format(self._user, host)
@@ -139,7 +252,7 @@ class Controller(object):
     mgmt_commands = []
     for host in self._hosts:
       command = ['scp', '-r']
-      command.extend(self._ssh_options)
+      command.extend(self._ssh_options())
       desc = 'rpush: '
       for ll in local:
         tmp = ll.replace('?HOST', host)
@@ -177,7 +290,7 @@ class Controller(object):
     mgmt_commands = []
     for host in self._hosts:
       command = ['scp', '-r']
-      command.extend(self._ssh_options)
+      command.extend(self._ssh_options())
       desc = 'rpull: '
       remote2 = ''
       for idx, rr in enumerate(remote):
@@ -220,7 +333,7 @@ class Controller(object):
     mgmt_commands = []
     for host in self._hosts:
       command = ['ssh', '-T']
-      command.extend(self._ssh_options)
+      command.extend(self._ssh_options())
       desc = 'rscript: '
       if self._user:
         rspec = '{0}@{1}'.format(self._user, host)
@@ -251,51 +364,7 @@ class Controller(object):
     self._run_commands(mgmt_commands)
     return mgmt_commands
 
-  def _run_commands(self, mgmt_commands):
-    """This runs the specified commands.
 
-    Args:
-      mgmt_commands  : A list of Commands
-
-    Returns:
-      Nothing, but it completes mgmt_command objects
-    """
-
-    # run all commands
-    outstanding = []
-    failed = []
-    for mgmt_command in mgmt_commands:
-      mgmt_command.start()
-      if self._parallel:
-        outstanding.append(mgmt_command)
-      else:
-        mgmt_command.join()
-        if not self._quiet:
-          mgmt_command.status(self._color)
-        if mgmt_command.retcode is not 0:
-          failed.append(mgmt_command)
-
-    for mgmt_command in outstanding:
-      mgmt_command.join()
-      if not self._quiet:
-        mgmt_command.status(self._color)
-      if mgmt_command.retcode is not 0:
-        failed.append(mgmt_command)
-
-    # show stats
-    if not self._quiet:
-      total = len(mgmt_commands)
-      failures = len(failed)
-      successes = total - failures
-      print ('{0} succeeded, {1} failed, {2} total'
-             .format(successes, failures, total))
-      if failures > 0:
-        print 'Failed hosts:'
-        for mgmt_command in failed:
-          host = mgmt_command.host
-          if self._color:
-            host = colored(host, 'red')
-          print host
 
 
 def all_success(mgmt_commands):
@@ -340,7 +409,6 @@ def parse_file(filename):
 
   return lines
 
-
 class Command(threading.Thread):
     """A container class for commands given to Controller."""
 
@@ -380,7 +448,11 @@ class Command(threading.Thread):
         out, err = self.process.communicate(input=self.stdin)
         self.retcode = self.process.returncode
         self.stdout = out
+        while self.stdout[-1:] == '\n':
+          self.stdout = self.stdout[:-1]
         self.stderr = err
+        while self.stderr[-1:] == '\n':
+          self.stderr = self.stderr[:-1]
         self.process = None
         if self.retcode == 0:
           break
