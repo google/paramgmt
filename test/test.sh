@@ -67,6 +67,11 @@ for test_id in $(seq 1 $TESTS); do
   echo "***********************************************"
   echo ""
 
+  if ! which rhosts lcmd rcmd rpush rpull rscript > /dev/null; then
+    echo "paramgmt executables aren't present, please install"
+    exit -1
+  fi
+
   load_hosts ${HOSTFILE}
 
   tmp=`python -c "import tempfile; print tempfile.mkdtemp()"`
