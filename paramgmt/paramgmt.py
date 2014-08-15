@@ -32,6 +32,54 @@ COLOR_DEFAULT = True
 ATTEMPTS_DEFAULT = 1
 
 
+def _should_color(want_to_color):
+  """This function turns 'want_to_color' into 'should_color'."""
+  return want_to_color and CAN_COLOR and sys.stdout.isatty()
+
+
+def all_success(mgmt_commands):
+  """Determines if all child processes were successful.
+
+  Args:
+    mgmt_commands : A list of all Command objects
+
+  Returns:
+    True if all child processes succeeded
+  """
+
+  for mgmt_command in mgmt_commands:
+    if mgmt_command.retcode != 0:
+      return False
+  return True
+
+
+def parse_file(filename):
+  """This function parses a file to generate a list of lines.
+
+  This function removes comments delimited by '#', ingores empty
+  lines, and leading and trailing whitespace.
+
+  Args:
+    filename : The name of the file to be parsed
+
+  Returns:
+    A list of lines.
+  """
+
+  fd = open(filename, 'r')
+  lines = []
+  for line in fd:
+    idx = line.find('#')
+    if idx >= 0:
+      line = line[:idx]
+    line = line.strip()
+    if line:
+      lines.append(line.strip())
+  fd.close()
+
+  return lines
+
+
 class Controller(object):
   """This class offers parallel cluster management using SSH and SCP."""
 
@@ -54,7 +102,7 @@ class Controller(object):
     self._hosts = hosts
     self._parallel = parallel
     self._quiet = quiet
-    self._color = CAN_COLOR and color and sys.stdout.isatty()
+    self._color = _should_color(color)
     self._attempts = int(attempts)
     self._ssh_connect_timeout = 2
     self._ssh_connection_attempts = 3
@@ -88,13 +136,12 @@ class Controller(object):
     return self._color
 
   @color.setter
-  def color(self, val):
-    if val:
-      if not sys.stdout.isatty():
-        raise EnvironmentError('stdout is not a TTY')
+  def color(self, val, force=False):
+    if val and force:
       if not CAN_COLOR:
         raise EnvironmentError('package \'termcolor\' does not exist')
-    self._color = val
+      self._color = True
+    self._color = _should_color(val)
 
   @property
   def attempts(self):
@@ -193,7 +240,7 @@ class Controller(object):
       command = ' '.join(command)
       mgmt_command = Command(
           host, ['/bin/sh'], self._attempts,
-          'lcmd: ({0}) {1}'.format(host, command),
+          'lcmd [{0}]: {1}'.format(host, command),
           command)
       mgmt_commands.append(mgmt_command)
 
@@ -217,13 +264,12 @@ class Controller(object):
     for host in self._hosts:
       command = ['ssh']
       command.extend(self._ssh_options())
-      desc = 'rcmd: '
       if self._user:
         rspec = '{0}@{1}'.format(self._user, host)
       else:
         rspec = '{0}'.format(host)
+      desc = 'rcmd [{0}]:'.format(rspec)
       command.append(rspec)
-      desc += '({0})'.format(rspec)
       for c in commands:
         tmp = c.replace('?HOST', host)
         command.append(tmp)
@@ -253,16 +299,16 @@ class Controller(object):
     for host in self._hosts:
       command = ['scp', '-r']
       command.extend(self._ssh_options())
-      desc = 'rpush: '
-      for ll in local:
-        tmp = ll.replace('?HOST', host)
-        command.append(tmp)
-        desc += ' {0}'.format(tmp)
-      desc += ' => '
       if self._user:
         rspec = '{0}@{1}'.format(self._user, host)
       else:
         rspec = '{0}'.format(host)
+      desc = 'rpush [{0}]: '.format(rspec)
+      for ll in local:
+        tmp = ll.replace('?HOST', host)
+        command.append(tmp)
+        desc += '{0} '.format(tmp)
+      desc += '=> '
       tmp = '{0}:{1}'.format(rspec, remote.replace('?HOST', host))
       command.append(tmp)
       desc += tmp
@@ -291,7 +337,11 @@ class Controller(object):
     for host in self._hosts:
       command = ['scp', '-r']
       command.extend(self._ssh_options())
-      desc = 'rpull: '
+      if self._user:
+        rspec = '{0}@{1}'.format(self._user, host)
+      else:
+        rspec = '{0}'.format(host)
+      desc = 'rpull [{0}]: '.format(rspec)
       remote2 = ''
       for idx, rr in enumerate(remote):
         remote2 += rr.replace('?HOST', host)
@@ -299,10 +349,6 @@ class Controller(object):
           remote2 += ','
       if len(remote) > 1:
         remote2 = '{{{0}}}'.format(remote2)
-      if self._user:
-        rspec = '{0}@{1}'.format(self._user, host)
-      else:
-        rspec = '{0}'.format(host)
       tmp = '{0}:{1}'.format(rspec, remote2)
       command.append(tmp)
       desc += tmp
@@ -334,11 +380,11 @@ class Controller(object):
     for host in self._hosts:
       command = ['ssh', '-T']
       command.extend(self._ssh_options())
-      desc = 'rscript: '
       if self._user:
         rspec = '{0}@{1}'.format(self._user, host)
       else:
         rspec = '{0}'.format(host)
+      desc = 'rscript [{0}]: '.format(rspec)
       command.append(rspec)
 
       # read in the text of the scripts
@@ -349,65 +395,21 @@ class Controller(object):
         script_names.append(script_name)
         with open(script_name, 'r') as fd:
           all_script += fd.read()
-        if all_script[len(all_script)-1] != '\n':
+        if all_script[-1:] != '\n':
           all_script += '\n'
       if not all_script:
         all_script = ':'
 
       # format description and command
-      desc += '({0}) running {1}'.format(rspec, ' '.join(script_names))
+      desc += 'running {0}'.format(' '.join(script_names))
       mgmt_command = Command(host, command, self._attempts, desc,
-                                        all_script.replace('?HOST', host))
+                             all_script.replace('?HOST', host))
       mgmt_commands.append(mgmt_command)
 
     # run all commands
     self._run_commands(mgmt_commands)
     return mgmt_commands
 
-
-
-
-def all_success(mgmt_commands):
-  """Determines if all child processes were successful.
-
-  Args:
-    mgmt_commands : A list of all Command objects
-
-  Returns:
-    True if all child processes succeeded
-  """
-
-  for mgmt_command in mgmt_commands:
-    if mgmt_command.retcode != 0:
-      return False
-  return True
-
-
-def parse_file(filename):
-  """This function parses a file to generate a list of lines.
-
-  This function removes comments delimited by '#', ingores empty
-  lines, and leading and trailing whitespace.
-
-  Args:
-    filename : The name of the file to be parsed
-
-  Returns:
-    A list of lines.
-  """
-
-  fd = open(filename, 'r')
-  lines = []
-  for line in fd:
-    idx = line.find('#')
-    if idx >= 0:
-      line = line[:idx]
-    line = line.strip()
-    if line:
-      lines.append(line.strip())
-  fd.close()
-
-  return lines
 
 class Command(threading.Thread):
     """A container class for commands given to Controller."""
@@ -464,7 +466,7 @@ class Command(threading.Thread):
         color : whether or not to color the output
       """
 
-      color = color and CAN_COLOR and sys.stdout.isatty()
+      color = _should_color(color)
 
       if color:
         print '{0}'.format(colored(self.description, 'blue'))

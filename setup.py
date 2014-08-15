@@ -11,8 +11,8 @@ except:
 
 
 def find_version(*file_paths):
-    version_file = codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                                            *file_paths), 'r').read()
+    version_file = codecs.open(os.path.join(os.path.abspath(
+        os.path.dirname(__file__)), *file_paths), 'r').read()
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
                               version_file, re.M)
     if version_match:
