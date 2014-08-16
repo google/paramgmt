@@ -24,7 +24,7 @@ import subprocess
 import sys
 import tempfile
 
-import paramgmt
+from . import paramgmt
 
 
 def main(args):
@@ -36,19 +36,23 @@ def main(args):
   if args.hostfile is not None:
     hosts.extend(paramgmt.parse_file(args.hostfile))
   if not hosts:
-    print 'no hosts specified'
+    print('no hosts specified')
     return 0
 
   for round in range(0, rounds):
-    print '***********************************************'
-    print '*** Starting test {0} of {1}'.format(round+1, rounds)
-    print '***********************************************'
-    print ''
+    print('***********************************************')
+    print('*** Starting test {0} of {1}'.format(round+1, rounds))
+    print('***********************************************')
+    print('')
 
     tmp = tempfile.mkdtemp()
 
     ctl = paramgmt.Controller(hosts=hosts, user=user, parallel=True,
                               quiet=False, color=True, attempts=3)
+
+    ctl.attempts = 1
+    sts = ctl.local_command(['ping', '-c', '1', '?HOST'])
+    assert paramgmt.all_success(sts)
 
     ctl.attempts = 1
     sts = ctl.local_command(['mkdir', '-p', os.path.join(tmp, '?HOST')])

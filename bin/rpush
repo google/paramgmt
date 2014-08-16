@@ -30,7 +30,7 @@ def main(args):
   if args.hostfile is not None:
     hosts.extend(paramgmt.parse_file(args.hostfile))
   if not hosts:
-    print 'no hosts specified'
+    print('no hosts specified')
     return 0
 
   parallel = not args.sequential

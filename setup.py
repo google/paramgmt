@@ -1,14 +1,14 @@
-#!/usr/bin/env python
-
 import codecs
 import re
 import os
+import sys
 
 try:
   from setuptools import setup
 except:
-  from distutils.core import setup
-
+  print('please install setuptools:')
+  print('  pip install setuptools')
+  sys.exit(-1)
 
 def find_version(*file_paths):
     version_file = codecs.open(os.path.join(os.path.abspath(

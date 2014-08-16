@@ -30,11 +30,11 @@ def main(args):
   if args.hostfile is not None:
     hosts.extend(paramgmt.parse_file(args.hostfile))
   if not hosts:
-    print 'no hosts specified'
+    print('no hosts specified')
     return 0
 
   for host in hosts:
-    print '{0}'.format(host)
+    print('{0}'.format(host))
   return 0
 
 

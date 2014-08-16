@@ -1,3 +1,3 @@
-from paramgmt import *
+from .paramgmt import *
 
-__version__ = '0.1.0'
+__version__ = '0.3.0'

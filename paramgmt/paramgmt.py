@@ -14,6 +14,9 @@
 
 """paramgmt: a library for executing commands to a cluster in parallel."""
 
+# Python 3 compatibility
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
 import subprocess
 import sys
 import threading
@@ -210,15 +213,15 @@ class Controller(object):
       total = len(mgmt_commands)
       failures = len(failed)
       successes = total - failures
-      print ('{0} succeeded, {1} failed, {2} total\n'
-             .format(successes, failures, total))
+      print(('{0} succeeded, {1} failed, {2} total\n'
+             .format(successes, failures, total)))
       if failures > 0:
-        print 'Failed hosts:'
+        print('Failed hosts:')
         for mgmt_command in failed:
           host = mgmt_command.host
           if self._color:
             host = colored(host, 'red')
-          print host
+          print(host)
 
   def local_command(self, commands):
     """Run local command for all hosts specified.
@@ -428,7 +431,10 @@ class Command(threading.Thread):
       self.max_attempts = max_attempts
       self.process = None
       self.retcode = None
-      self.stdin = stdin
+      if stdin:
+        self.stdin = stdin.encode('utf-8')
+      else:
+        self.stdin = None
       self.stdout = None
       self.stderr = None
 
@@ -449,10 +455,10 @@ class Command(threading.Thread):
 
         out, err = self.process.communicate(input=self.stdin)
         self.retcode = self.process.returncode
-        self.stdout = out
+        self.stdout = out.decode('utf-8')
         while self.stdout[-1:] == '\n':
           self.stdout = self.stdout[:-1]
-        self.stderr = err
+        self.stderr = err.decode('utf-8')
         while self.stderr[-1:] == '\n':
           self.stderr = self.stderr[:-1]
         self.process = None
@@ -469,26 +475,26 @@ class Command(threading.Thread):
       color = _should_color(color)
 
       if color:
-        print '{0}'.format(colored(self.description, 'blue'))
+        print('{0}'.format(colored(self.description, 'blue')))
       else:
-        print '{0}'.format(self.description)
+        print('{0}'.format(self.description))
 
       if self.stdout:
         if color:
-          print 'stdout:\n{0}'.format(colored(self.stdout, 'green'))
+          print('stdout:\n{0}'.format(colored(self.stdout, 'green')))
         else:
-          print 'stdout:\n{0}'.format(self.stdout)
+          print('stdout:\n{0}'.format(self.stdout))
 
       if self.stderr:
         if color:
-          print 'stderr:\n{0}'.format(colored(self.stderr, 'red'))
+          print('stderr:\n{0}'.format(colored(self.stderr, 'red')))
         else:
-          print 'stderr:\n{0}'.format(self.stderr)
+          print('stderr:\n{0}'.format(self.stderr))
 
       if self.retcode is not 0:
         if color:
-          print 'return code: {0}'.format(colored(self.retcode, 'red'))
-          print 'attempts:    {0}'.format(colored(self.attempts, 'red'))
+          print('return code: {0}'.format(colored(self.retcode, 'red')))
+          print('attempts:    {0}'.format(colored(self.attempts, 'red')))
         else:
-          print 'return code: {0}'.format(self.retcode)
-          print 'attempts:    {0}'.format(self.attempts)
+          print('return code: {0}'.format(self.retcode))
+          print('attempts:    {0}'.format(self.attempts))
