@@ -197,14 +197,14 @@ class Controller(object):
       else:
         mgmt_command.join()
         if not self._quiet:
-          mgmt_command.status(self._color)
+          print(mgmt_command.status(self._color))
         if mgmt_command.retcode is not 0:
           failed.append(mgmt_command)
 
     for mgmt_command in outstanding:
       mgmt_command.join()
       if not self._quiet:
-        mgmt_command.status(self._color)
+        print(mgmt_command.status(self._color))
       if mgmt_command.retcode is not 0:
         failed.append(mgmt_command)
 
@@ -473,28 +473,31 @@ class Command(threading.Thread):
       """
 
       color = _should_color(color)
+      text = []
 
       if color:
-        print('{0}'.format(colored(self.description, 'blue')))
+        text.append('{0}'.format(colored(self.description, 'blue')))
       else:
-        print('{0}'.format(self.description))
+        text.append('{0}'.format(self.description))
 
       if self.stdout:
         if color:
-          print('stdout:\n{0}'.format(colored(self.stdout, 'green')))
+          text.append('stdout:\n{0}'.format(colored(self.stdout, 'green')))
         else:
-          print('stdout:\n{0}'.format(self.stdout))
+          text.append('stdout:\n{0}'.format(self.stdout))
 
       if self.stderr:
         if color:
-          print('stderr:\n{0}'.format(colored(self.stderr, 'red')))
+          text.append('stderr:\n{0}'.format(colored(self.stderr, 'red')))
         else:
-          print('stderr:\n{0}'.format(self.stderr))
+          text.append('stderr:\n{0}'.format(self.stderr))
 
       if self.retcode is not 0:
         if color:
-          print('return code: {0}'.format(colored(self.retcode, 'red')))
-          print('attempts:    {0}'.format(colored(self.attempts, 'red')))
+          text.append('return code: {0}'.format(colored(self.retcode, 'red')))
+          text.append('attempts:    {0}'.format(colored(self.attempts, 'red')))
         else:
-          print('return code: {0}'.format(self.retcode))
-          print('attempts:    {0}'.format(self.attempts))
+          text.append('return code: {0}'.format(self.retcode))
+          text.append('attempts:    {0}'.format(self.attempts))
+
+      return '\n'.join(text)
