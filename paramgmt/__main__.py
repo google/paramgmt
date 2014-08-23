@@ -34,7 +34,8 @@ def main(args):
   if args.hosts is not None:
     hosts.extend(args.hosts)
   if args.hostfile is not None:
-    hosts.extend(paramgmt.parse_file(args.hostfile))
+    hosts.extend(paramgmt.parse_stream(args.hostfile))
+    args.hostfile.close()
   if not hosts:
     print('no hosts specified')
     return 0
@@ -245,27 +246,13 @@ def get_script(num, tmp):
     raise Exception('moron!')
 
 
-def check_hosts(value):
-  return value.split()
-
-
-def check_hostfile(value):
-  if not os.path.isfile(value):
-    msg = 'hostfile "{0}" does not exist'.format(value)
-    raise argparse.ArgumentTypeError(msg)
-  if not os.access(value, os.R_OK):
-    msg = 'hostfile "{0}" is not readable'.format(value)
-    raise argparse.ArgumentTypeError(msg)
-  return value
-
-
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(prog='rhosts', description='remote hosts')
   parser.add_argument('-u', '--user', default=paramgmt.USER_DEFAULT,
                       help='Username for SSH commands')
-  parser.add_argument('-m', '--hosts', type=check_hosts,
+  parser.add_argument('-m', '--hosts', nargs='+',
                       help='A list of hostnames (space separated)')
-  parser.add_argument('-f', '--hostfile', type=check_hostfile,
+  parser.add_argument('-f', '--hostfile', type=argparse.FileType('r'),
                       help='A file containing hostnames')
   parser.add_argument('-r', '--rounds', type=int, default=1,
                       help='Number of test rounds')

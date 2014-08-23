@@ -24,7 +24,7 @@ import threading
 try:
   from termcolor import colored
   CAN_COLOR = True
-except:
+except ImportError:
   CAN_COLOR = False
 
 # defaults declared here for uses in binaries
@@ -59,8 +59,8 @@ def all_success(mgmt_commands):
 def parse_file(filename):
   """This function parses a file to generate a list of lines.
 
-  This function removes comments delimited by '#', ingores empty
-  lines, and leading and trailing whitespace.
+  This function wraps the parse_stream() function by opening
+  the specified file first.
 
   Args:
     filename : The name of the file to be parsed
@@ -70,16 +70,32 @@ def parse_file(filename):
   """
 
   fd = open(filename, 'r')
+  lines = parse_stream(fd)
+  fd.close()
+  return lines
+
+
+def parse_stream(stream):
+  """This function parses the contents of a stream to generate a list of lines.
+
+  This function removes comments delimited by '#', ingores empty
+  lines, and leading and trailing whitespace.
+
+  Args:
+    stream : A file that has been open()'d
+
+  Returns:
+    A list of lines.
+  """
+
   lines = []
-  for line in fd:
+  for line in stream:
     idx = line.find('#')
     if idx >= 0:
       line = line[:idx]
     line = line.strip()
     if line:
       lines.append(line.strip())
-  fd.close()
-
   return lines
 
 
@@ -488,7 +504,8 @@ class Command(threading.Thread):
 
       if self.stderr:
         if color:
-          text.append('stderr:\n{0}'.format(colored(self.stderr, 'red')))
+          stderr_color = 'yellow' if self.retcode is 0 else 'red'
+          text.append('stderr:\n{0}'.format(colored(self.stderr, stderr_color)))
         else:
           text.append('stderr:\n{0}'.format(self.stderr))
 
