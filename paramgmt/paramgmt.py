@@ -504,8 +504,10 @@ class Command(threading.Thread):
 
       if self.stderr:
         if color:
-          stderr_color = 'yellow' if self.retcode is 0 else 'red'
-          text.append('stderr:\n{0}'.format(colored(self.stderr, stderr_color)))
+          if self.retcode is not 0:
+            text.append('stderr:\n{0}'.format(colored(self.stderr, 'red')))
+          else:
+            text.append('stderr:\n{0}'.format(colored(self.stderr, 'yellow')))
         else:
           text.append('stderr:\n{0}'.format(self.stderr))
 
@@ -515,6 +517,11 @@ class Command(threading.Thread):
           text.append('attempts:    {0}'.format(colored(self.attempts, 'red')))
         else:
           text.append('return code: {0}'.format(self.retcode))
+          text.append('attempts:    {0}'.format(self.attempts))
+      elif self.attempts is not 1:
+        if color:
+          text.append('attempts:    {0}'.format(colored(self.attempts, 'yellow')))
+        else:
           text.append('attempts:    {0}'.format(self.attempts))
 
       return '\n'.join(text)
