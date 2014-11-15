@@ -198,20 +198,6 @@ def main(args):
       assert s.stdout == 'This is stdout text'
       assert s.stderr == 'This is stderr text'
 
-    ctl.attempts = 1
-    multi = os.path.join(tmp, '?HOST', 'multi')
-    sts = ctl.local_command(['rm -f {0} && touch {0}'.format(multi)])
-    assert paramgmt.all_success(sts)
-
-    ctl.attempts = 5
-    sts = ctl.local_command(
-        [('echo -n X >> {0} && test `stat {0} |'
-          'grep Size | awk \'{{print $2}}\'` -eq 5')
-         .format(multi)])
-    assert paramgmt.all_success(sts)
-    for s in sts:
-      assert s.attempts == 5
-
     do('rm -rf {0}'.format(tmp))
 
   return 0

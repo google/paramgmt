@@ -32,7 +32,10 @@ USER_DEFAULT = None
 PARALLEL_DEFAULT = True
 QUIET_DEFAULT = False
 COLOR_DEFAULT = True
-ATTEMPTS_DEFAULT = 1
+ATTEMPTS_DEFAULT = 5
+
+# error message from SSH indicating that it couldn't connect
+SSH_ERROR_MSG = 'Connection timed out during banner exchange'
 
 
 def _should_color(want_to_color):
@@ -472,13 +475,13 @@ class Command(threading.Thread):
         out, err = self.process.communicate(input=self.stdin)
         self.retcode = self.process.returncode
         self.stdout = out.decode('utf-8')
-        while self.stdout[-1:] == '\n':
-          self.stdout = self.stdout[:-1]
+        self.stdout = self.stdout.rstrip('\n')
         self.stderr = err.decode('utf-8')
-        while self.stderr[-1:] == '\n':
-          self.stderr = self.stderr[:-1]
+        self.stderr = self.stderr.rstrip('\n')
         self.process = None
-        if self.retcode == 0:
+        if self.retcode != 0 and self.stderr.startswith(SSH_ERROR_MSG):
+          continue
+        else:
           break
 
     def status(self, color=True):
@@ -520,7 +523,8 @@ class Command(threading.Thread):
           text.append('attempts:    {0}'.format(self.attempts))
       elif self.attempts is not 1:
         if color:
-          text.append('attempts:    {0}'.format(colored(self.attempts, 'yellow')))
+          text.append('attempts:    {0}'.format(colored(self.attempts,
+                                                        'yellow')))
         else:
           text.append('attempts:    {0}'.format(self.attempts))
 

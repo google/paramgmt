@@ -16,7 +16,6 @@
 
 HOSTFILE=${1:-hosts.txt}
 TESTS=${2:-1}  # default to one test
-ATTEMPTS=3
 
 hosts=()
 function load_hosts() {
@@ -76,7 +75,7 @@ for test_id in $(seq 1 $TESTS); do
 
   tmp=`python -c "import tempfile; print tempfile.mkdtemp()"`
 
-  lcmd --hostfile ${HOSTFILE} --attempts 1 -- mkdir -p $tmp/?HOST
+  lcmd -f ${HOSTFILE} -- mkdir -p $tmp/?HOST
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
     assert "-d $tmp/$host" $LINENO
@@ -89,8 +88,7 @@ for test_id in $(seq 1 $TESTS); do
   echo "test 3" > $tmp/test3.txt
   assert "-f $tmp/test3.txt" $LINENO
 
-  lcmd --hostfile ${HOSTFILE} --attempts 1 -- \
-    cp $tmp/test1.txt $tmp/?HOST/test1.txt
+  lcmd -f ${HOSTFILE} -- cp $tmp/test1.txt $tmp/?HOST/test1.txt
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
     assert "-f $tmp/$host/test1.txt" $LINENO
@@ -99,8 +97,7 @@ for test_id in $(seq 1 $TESTS); do
     assert "$? -eq 0" $LINENO
   done
 
-  lcmd --hostfile ${HOSTFILE} --attempts 1 -- \
-    cp $tmp/test2.txt $tmp/?HOST/test2.txt
+  lcmd -f ${HOSTFILE} -- cp $tmp/test2.txt $tmp/?HOST/test2.txt
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
     assert "-f $tmp/$host/test2.txt" $LINENO
@@ -109,8 +106,7 @@ for test_id in $(seq 1 $TESTS); do
     assert "$? -eq 0" $LINENO
   done
 
-  lcmd --hostfile ${HOSTFILE} --attempts 1 -- \
-    cp $tmp/test3.txt $tmp/?HOST/test3.txt
+  lcmd -f ${HOSTFILE} -- cp $tmp/test3.txt $tmp/?HOST/test3.txt
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
     assert "-f $tmp/$host/test3.txt" $LINENO
@@ -119,47 +115,38 @@ for test_id in $(seq 1 $TESTS); do
     assert "$? -eq 0" $LINENO
   done
 
-  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS -- \
-    rm -rf $tmp
+  rcmd -f ${HOSTFILE} -- rm -rf $tmp
   assert "$? -eq 0" $LINENO
 
-  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS -- \
-    mkdir -p $tmp/?HOST
+  rcmd -f ${HOSTFILE} -- mkdir -p $tmp/?HOST
   assert "$? -eq 0" $LINENO
 
-  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS -- \
-    test -d $tmp/?HOST
+  rcmd -f ${HOSTFILE} -- test -d $tmp/?HOST
   assert "$? -eq 0" $LINENO
 
-  rpush --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
-    --destination=$tmp/?HOST/ -- $tmp/?HOST/test1.txt $tmp/?HOST/test2.txt
+  rpush -f ${HOSTFILE} -d $tmp/?HOST/ -- \
+    $tmp/?HOST/test1.txt $tmp/?HOST/test2.txt
   assert "$? -eq 0" $LINENO
 
-  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS -- \
-    test -f $tmp/?HOST/test1.txt
+  rcmd -f ${HOSTFILE} -- test -f $tmp/?HOST/test1.txt
   assert "$? -eq 0" $LINENO
 
-  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS -- \
-    test -f $tmp/?HOST/test2.txt
+  rcmd -f ${HOSTFILE} -- test -f $tmp/?HOST/test2.txt
   assert "$? -eq 0" $LINENO
 
-  rpush --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
-    --destination=$tmp/?HOST/ -- $tmp/?HOST/test3.txt
+  rpush -f ${HOSTFILE} -d $tmp/?HOST/ -- $tmp/?HOST/test3.txt
   assert "$? -eq 0" $LINENO
 
-  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS -- \
-    test -f $tmp/?HOST/test3.txt
+  rcmd -f ${HOSTFILE} -- test -f $tmp/?HOST/test3.txt
   assert "$? -eq 0" $LINENO
 
-  lcmd --hostfile ${HOSTFILE} --attempts 1 -- \
-    mkdir -p $tmp/?HOST/pull
+  lcmd -f ${HOSTFILE} -- mkdir -p $tmp/?HOST/pull
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
     assert "-d $tmp/$host/pull" $LINENO
   done
 
-  rpull --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
-    --destination=$tmp/?HOST/pull/ -- \
+  rpull -f ${HOSTFILE} -d $tmp/?HOST/pull/ -- \
     $tmp/?HOST/test1.txt $tmp/?HOST/test3.txt
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
@@ -174,8 +161,7 @@ for test_id in $(seq 1 $TESTS); do
     assert "$? -eq 0" $LINENO
   done
 
-  rpull --hostfile ${HOSTFILE} --attempts $ATTEMPTS \
-    --destination=$tmp/?HOST/pull/ -- $tmp/?HOST/test2.txt
+  rpull -f ${HOSTFILE} -d $tmp/?HOST/pull/ -- $tmp/?HOST/test2.txt
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
     assert "-f $tmp/$host/pull/test2.txt" $LINENO
@@ -188,14 +174,11 @@ for test_id in $(seq 1 $TESTS); do
   make_script 2 $tmp
   make_script 3 $tmp
 
-  lcmd --hostfile ${HOSTFILE} --attempts 1 cp $tmp/script1.sh -- \
-    $tmp/?HOST/script1.sh
+  lcmd -f ${HOSTFILE} cp $tmp/script1.sh -- $tmp/?HOST/script1.sh
   assert "$? -eq 0" $LINENO
-  lcmd --hostfile ${HOSTFILE} --attempts 1 cp $tmp/script2.sh -- \
-    $tmp/?HOST/script2.sh
+  lcmd -f ${HOSTFILE} cp $tmp/script2.sh -- $tmp/?HOST/script2.sh
   assert "$? -eq 0" $LINENO
-  lcmd --hostfile ${HOSTFILE} --attempts 1 cp $tmp/script3.sh -- \
-    $tmp/?HOST/script3.sh
+  lcmd -f ${HOSTFILE} cp $tmp/script3.sh -- $tmp/?HOST/script3.sh
   assert "$? -eq 0" $LINENO
   for host in ${hosts[*]}; do
     assert "-f $tmp/$host/script1.sh" $LINENO
@@ -203,42 +186,26 @@ for test_id in $(seq 1 $TESTS); do
     assert "-f $tmp/$host/script3.sh" $LINENO
   done
 
-  rscript --hostfile ${HOSTFILE} --attempts $ATTEMPTS -- \
-    $tmp/?HOST/script1.sh $tmp/?HOST/script2.sh \
+  rscript -f ${HOSTFILE} -- $tmp/?HOST/script1.sh $tmp/?HOST/script2.sh \
     $tmp/?HOST/script3.sh
   assert "$? -eq 0" $LINENO
 
-  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS -- \
-    test ! -f $tmp/?HOST/test1.txt
+  rcmd -f ${HOSTFILE} -- test ! -f $tmp/?HOST/test1.txt
   assert "$? -eq 0" $LINENO
-  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS -- \
-    test -f $tmp/?HOST/test2.txt
+  rcmd -f ${HOSTFILE} -- test -f $tmp/?HOST/test2.txt
   assert "$? -eq 0" $LINENO
-  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS -- \
-    test ! -f $tmp/?HOST/test3.txt
+  rcmd -f ${HOSTFILE} -- test ! -f $tmp/?HOST/test3.txt
   assert "$? -eq 0" $LINENO
 
-  lcmd --hostfile ${HOSTFILE} --attempts 1 -- \
+  lcmd -f ${HOSTFILE} -- \
     "cat $tmp/?HOST/pull/test3.txt | grep test && echo awesome"
   assert "$? -eq 0" $LINENO
 
-  lcmd --hostfile ${HOSTFILE} --attempts 1 -- \
+  lcmd -f ${HOSTFILE} -- \
     "echo 'This is error text' 1>&2 && echo 'This is normal text'"
   assert "$? -eq 0" $LINENO
 
-  lcmd --hostfile ${HOSTFILE} --attempts 1 -- \
-    touch $tmp/?HOST/multi
-  assert "$? -eq 0" $LINENO
-
-  cmd1="echo -n X >> $tmp/?HOST/multi"
-  fsize="stat $tmp/?HOST/multi | grep Size | awk '{print \$2}'"
-  cmd2="test \`$fsize\` -eq 5"
-  lcmd --hostfile ${HOSTFILE} --attempts 5 -- \
-    "$cmd1 && $cmd2"
-  assert "$? -eq 0" $LINENO
-
-  rcmd --hostfile ${HOSTFILE} --attempts $ATTEMPTS -- \
-    rm -rf $tmp
+  rcmd -f ${HOSTFILE} -- rm -rf $tmp
   assert "$? -eq 0" $LINENO
 
   rm -rf $tmp
