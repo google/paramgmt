@@ -19,26 +19,34 @@ functionality provided by the Python package.
 
 ParaMgmt is compatible with both Python2.7+ and Python3.x. I personally
 recommend Python3, so the following installation example will be for that. If
-you insist on using Python2, substitute 'pip3' with 'pip2' and 'python3' with
-'python2'. If you want ParaMgmt installed in both, install it in Python2 then in
+you insist on using Python2, substitute `pip3` with `pip2` and `python3` with
+`python2`. If you want ParaMgmt installed in both, install it in Python2 then in
 Python3. The command-line executables will then use the latter. The installer
 requires the `setuptools` package.
 
-Both installations methods below will install a Python package called 'paramgmt'
-as well as 6 command-line executables: rhosts, lcmd, rcmd, rpush, rpull, and
-rscript.
+Both installations methods below will install a Python package called `paramgmt`
+as well as 6 command-line executables: `rhosts`, `lcmd`, `rcmd`, `rpush`, `rpull`, and
+`rscript`.
 
 ### Python package manager (PIP)
 Install globally:
-    sudo pip3 install git+https://github.com/google/paramgmt.git
+```bash
+sudo pip3 install git+https://github.com/google/paramgmt.git
+```
 Install locally:
-    pip3 install --user git+https://github.com/google/paramgmt.git
+```bash
+pip3 install --user git+https://github.com/google/paramgmt.git
+```
 
 ### Source installation
 Install globally:
-    sudo python3 setup.py install
+```bash
+sudo python3 setup.py install
+```
 Install locally:
-    python3 setup.py install --user
+```bash
+python3 setup.py install --user
+```
 
 ## Usage
 TODO(nicmcd)
