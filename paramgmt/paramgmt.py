@@ -32,10 +32,12 @@ USER_DEFAULT = None
 PARALLEL_DEFAULT = True
 QUIET_DEFAULT = False
 COLOR_DEFAULT = True
-ATTEMPTS_DEFAULT = 5
+ATTEMPTS_DEFAULT = 3
 
 # error message from SSH indicating that it couldn't connect
-SSH_ERROR_MSG = 'Connection timed out during banner exchange'
+SSH_ERROR_MSGS = [
+    'Connection timed out during banner exchange',
+    'ssh_exchange_identification: Connection closed by remote host']
 
 
 def _should_color(want_to_color):
@@ -479,8 +481,16 @@ class Command(threading.Thread):
         self.stderr = err.decode('utf-8')
         self.stderr = self.stderr.rstrip('\n')
         self.process = None
-        if self.retcode != 0 and self.stderr.startswith(SSH_ERROR_MSG):
-          continue
+        if self.retcode != 0:
+          ssh_error = False
+          for msg in SSH_ERROR_MSG:
+            if self.stderr.startswith(msg):
+              ssh_error = True
+              break
+          if ssh_error:
+            continue
+          else:
+            break
         else:
           break
 
