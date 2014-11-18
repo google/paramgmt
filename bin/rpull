@@ -64,7 +64,7 @@ if __name__ == '__main__':
                       help='Disable coloring of output')
   parser.add_argument('-a', '--attempts', type=check_attempts,
                       default=paramgmt.ATTEMPTS_DEFAULT,
-                      help='Maximum number of command attempts')
+                      help='Maximum number of SSH attempts')
   parser.add_argument('-d', '--destination', default='~/',
                       help='Specification for the local file/directory')
   parser.add_argument('remote', nargs='+',
