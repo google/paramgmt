@@ -15,7 +15,7 @@ transferring files to and from remote machines, and executing local scripts on
 remote machines. This package includes command-line executables that wrap the
 functionality provided by the Python package.
 
-## Installation
+## Install
 
 ParaMgmt is compatible with both Python2.7+ and Python3.x. I personally
 recommend Python3, so the following installation example will be for that. If
@@ -46,6 +46,13 @@ sudo python3 setup.py install
 Install locally:
 ```bash
 python3 setup.py install --user
+```
+
+## Uninstall
+The following command will uninstall the paramgmt Python package and the
+command-line executables.
+```bash
+sudo pip3 uninstall paramgmt
 ```
 
 ## Usage
