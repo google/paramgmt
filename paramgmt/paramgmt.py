@@ -483,7 +483,7 @@ class Command(threading.Thread):
         self.process = None
         if self.retcode != 0:
           ssh_error = False
-          for msg in SSH_ERROR_MSG:
+          for msg in SSH_ERROR_MSGS:
             if self.stderr.startswith(msg):
               ssh_error = True
               break
