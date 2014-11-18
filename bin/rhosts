@@ -40,7 +40,9 @@ def main(args):
 
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(prog='rhosts', description='remote hosts')
+  parser = argparse.ArgumentParser(
+    prog='rhosts', description='remote hosts',
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument('-m', '--hosts', nargs='+',
                       help='A list of hostnames')
   parser.add_argument('-f', '--hostfile', type=argparse.FileType('r'),

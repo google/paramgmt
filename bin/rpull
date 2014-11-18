@@ -51,7 +51,9 @@ def check_attempts(value):
 
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(prog='rpull', description='remote pull')
+  parser = argparse.ArgumentParser(
+    prog='rpull', description='remote pull',
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument('-u', '--user', default=paramgmt.USER_DEFAULT,
                       help='Username for SSH commands')
   parser.add_argument('-m', '--hosts', nargs='+',
