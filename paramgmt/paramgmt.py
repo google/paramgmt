@@ -36,8 +36,9 @@ ATTEMPTS_DEFAULT = 3
 
 # error message from SSH indicating that it couldn't connect
 SSH_ERROR_MSGS = [
-    'Connection timed out during banner exchange',
-    'ssh_exchange_identification: Connection closed by remote host']
+  'Connection timed out during banner exchange',
+  'ssh_exchange_identification: Connection closed by remote host',
+  'ssh_exchange_identification: read: Connection reset by peer']
 
 
 def _should_color(want_to_color):
