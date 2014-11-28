@@ -55,5 +55,19 @@ command-line executables.
 sudo pip3 uninstall paramgmt
 ```
 
+## Test
+Create a hosts file
+```bash
+echo 'tux.penguin.com myserver 192.168.200.2' | tr ' ' '\n' > hosts.txt
+```
+This command tests the `paramgmt` Python package.
+```bash
+python3 -m paramgmt -f hosts.txt -r 3
+```
+This command tests the command-line executables.
+```bash
+test/test.sh hosts.txt 3
+```
+
 ## Usage
 TODO(nicmcd)
