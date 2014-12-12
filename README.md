@@ -58,7 +58,11 @@ sudo pip3 uninstall paramgmt
 ## Test
 Create a hosts file
 ```bash
-echo 'tux.penguin.com myserver 192.168.200.2' | tr ' ' '\n' > hosts.txt
+cat<<EOF >> hosts.txt
+tux.penguin.com
+myserver
+192.168.200.2
+EOF
 ```
 This command tests the `paramgmt` Python package.
 ```bash
