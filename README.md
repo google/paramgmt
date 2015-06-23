@@ -74,4 +74,4 @@ test/test.sh hosts.txt 3
 ```
 
 ## Usage
-TODO(nicmcd)
+Tutorial here: https://nicisdigital.wordpress.com/2015/06/23/paramgmt-interacting-with-thousands-of-servers-over-ssh-part-1/
